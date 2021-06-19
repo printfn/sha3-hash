@@ -2,7 +2,10 @@
 name = "sha3-hash"
 version = "0.1.0"
 edition = "2018"
-description = "Easy-to-use SHA-3 library with Serde compatibility"
+description = "Easy-to-use SHA-3 library with Serde support"
+license = "CC0-1.0"
+homepage = "https://github.com/printfn/sha3-hash"
+repository = "https://github.com/printfn/sha3-hash"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
