@@ -141,6 +141,9 @@ impl<'de> Deserialize<'de> for Hash {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct TryFromHexError;
+
 impl Hash {
     /// Compute the SHA-3 hash of the provided bytes
     pub fn hash_bytes(data: &[u8]) -> Self {
@@ -168,6 +171,21 @@ impl Hash {
             buf[i * 2] = a;
             buf[i * 2 + 1] = b;
         }
+    }
+
+    /// Convert a hex string to a hash
+    ///
+    /// The string can be uppercase or lowercase (or mixed), and must be exactly 64
+    /// characters long.
+    pub fn try_from_hex(hex: &str) -> Result<Self, TryFromHexError> {
+        let mut hex = hex.trim().chars();
+        let mut bytes = [0; 32];
+        for byte in &mut bytes {
+            let a = hex_to_int(hex.next().ok_or(TryFromHexError)?).map_err(|_| TryFromHexError)?;
+            let b = hex_to_int(hex.next().ok_or(TryFromHexError)?).map_err(|_| TryFromHexError)?;
+            *byte = a * 16 + b
+        }
+        Ok(Self { bytes })
     }
 }
 
@@ -217,5 +235,38 @@ mod tests {
     fn deserialize_invalid_string() {
         let json = "\"xf9c2ba4e88f827d616045507605853ed73b8093f6efbc88eb1a6eacfa66ef26\"";
         assert!(serde_json::from_str::<Hash>(json).is_err());
+    }
+
+    #[test]
+    fn try_from_hex() {
+        assert!(Hash::try_from_hex("abc").is_err());
+        assert!(Hash::try_from_hex(
+            "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"
+        )
+        .is_ok());
+        assert!(Hash::try_from_hex(
+            "A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A"
+        )
+        .is_ok());
+        assert!(Hash::try_from_hex(
+            "a7FFC6F8BF1ED76651c14756A061D662F580FF4DE43B49FA82D80A4B80F8434A"
+        )
+        .is_ok());
+        assert!(Hash::try_from_hex(
+            "  A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A\r\n"
+        )
+        .is_ok());
+        assert!(Hash::try_from_hex("").is_err());
+
+        let json = "\"A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A\"";
+        let hash: Hash = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            Hash::try_from_hex(
+                "  A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A\r\n"
+            )
+            .unwrap(),
+            hash
+        );
     }
 }
