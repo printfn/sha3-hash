@@ -16,7 +16,7 @@ println!("{}", hash);
 let json_string = serde_json::to_string(&hash).unwrap();
 ```
 
-Adding `sha3-hash` to `Cargo.toml`:
+Adding sha3-hash to `Cargo.toml`:
 
 ```toml
 [dependencies]
