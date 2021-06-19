@@ -1,7 +1,7 @@
 # sha3-hash
 
 This library provides an easy-to-use SHA-3 hash type. It can be serialized and
-deserialized via [Serde](serde), and supports all expected operations.
+deserialized via [Serde](https://serde.rs), and supports all expected operations.
 
 Here is an example of how you might use this library to compute a SHA-3 hash:
 
