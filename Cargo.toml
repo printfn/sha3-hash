@@ -1,0 +1,14 @@
+[package]
+name = "sha3-hash"
+version = "0.1.0"
+edition = "2018"
+description = "Easy-to-use SHA-3 library with Serde compatibility"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sha3 = { version = "0.9.1" }
+serde = { version = "1.0.126" }
+
+[dev-dependencies]
+serde_json = "1.0.64"
