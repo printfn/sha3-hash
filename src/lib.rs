@@ -15,18 +15,20 @@
 //! // Serializing the hash to a JSON string using `serde_json`
 //! let json_string = serde_json::to_string(&hash).unwrap();
 //! ```
-//! 
+//!
 //! Adding this library to `Cargo.toml`:
-//! 
+//!
 //! ```toml
 //! [dependencies]
 //! sha3-hash = "0.1"
 //! ```
 //!
 
+#![no_std]
+
+use core::{convert::TryInto, fmt};
 use serde::{de::Unexpected, Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
-use std::{convert::TryInto, fmt};
 
 /// Represents a SHA-3 hash (256 bits)
 ///
@@ -84,10 +86,9 @@ fn byte_to_hex(b: u8) -> (u8, u8) {
 
 impl fmt::Debug for Hash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for byte in &self.bytes {
-            write!(f, "{:02x}", *byte)?;
-        }
-        Ok(())
+        let mut buf = [0; 64];
+        self.write_hex(&mut buf);
+        core::fmt::Write::write_str(f, core::str::from_utf8(&buf[..]).unwrap())
     }
 }
 
@@ -100,12 +101,8 @@ impl fmt::Display for Hash {
 impl Serialize for Hash {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut buf = [0; 64];
-        for i in 0..32 {
-            let (a, b) = byte_to_hex(self.bytes[i]);
-            buf[i * 2] = a;
-            buf[i * 2 + 1] = b;
-        }
-        serializer.serialize_str(std::str::from_utf8(&buf[..]).unwrap())
+        self.write_hex(&mut buf);
+        serializer.serialize_str(core::str::from_utf8(&buf[..]).unwrap())
     }
 }
 
@@ -164,12 +161,24 @@ impl Hash {
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self { bytes }
     }
+
+    fn write_hex(self, buf: &mut [u8; 64]) {
+        for i in 0..32 {
+            let (a, b) = byte_to_hex(self.bytes[i]);
+            buf[i * 2] = a;
+            buf[i * 2 + 1] = b;
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Hash;
     use serde_json;
+
+    extern crate std;
+    use std::format;
+    use std::string::ToString;
 
     #[test]
     fn test_empty_sha3() {
