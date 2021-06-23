@@ -131,6 +131,9 @@ impl<'de> serde::de::Visitor<'de> for HashStringVisitor {
                 .map_err(|()| E::invalid_value(Unexpected::Char(second_char), &self))?;
             *byte = first * 16 + second;
         }
+        if chars.next().is_some() {
+            return Err(E::invalid_length(v.len(), &self));
+        }
         Ok(Hash { bytes: arr })
     }
 }
@@ -185,6 +188,9 @@ impl Hash {
             let b = hex_to_int(hex.next().ok_or(TryFromHexError)?).map_err(|_| TryFromHexError)?;
             *byte = a * 16 + b
         }
+        if hex.next().is_some() {
+            return Err(TryFromHexError);
+        }
         Ok(Self { bytes })
     }
 }
@@ -234,6 +240,12 @@ mod tests {
     #[test]
     fn deserialize_invalid_string() {
         let json = "\"xf9c2ba4e88f827d616045507605853ed73b8093f6efbc88eb1a6eacfa66ef26\"";
+        assert!(serde_json::from_str::<Hash>(json).is_err());
+    }
+
+    #[test]
+    fn deserialize_too_long_string() {
+        let json = "\"ae7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a\"";
         assert!(serde_json::from_str::<Hash>(json).is_err());
     }
 
